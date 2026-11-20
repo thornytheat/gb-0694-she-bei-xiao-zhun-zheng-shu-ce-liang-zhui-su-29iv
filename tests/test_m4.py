@@ -1,6 +1,6 @@
 from app.modules.m4_ranges.rules import apply
 from copy import deepcopy
-def test_sample_out_of_range(ctx):assert sum(not r['range_valid'] for r in ctx['measurements'])==5
+def test_sample_out_of_range(ctx):assert sum(not r['range_valid'] for r in ctx['measurements'])==6
 def test_voltage_normalization(ctx):assert next(r for r in ctx['measurements'] if r['cert']=='END')['value_v']=='5.000'
 def test_lower_endpoint(ctx):
     c=deepcopy(ctx);c['measurements'][1]['value_v']='0';apply(c);assert c['measurements'][1]['range_valid'] is True

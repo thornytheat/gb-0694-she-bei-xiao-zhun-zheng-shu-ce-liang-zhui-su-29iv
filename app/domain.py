@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from app.numeric import number
 from app.errors import DomainError
 def day(text):
@@ -24,6 +25,7 @@ def trace(cert,certs):
         path.append(current)
         if current not in certs:return {'valid':False,'code':'MISSING_REFERENCE','path':path}
         r=certs[current]
+        if r.get('superseded'):return {'valid':False,'code':'SUPERSEDED','path':path}
         if r['revoked']=='yes':return {'valid':False,'code':'REVOKED','path':path}
         if child and not day(r['valid_from'])<=day(child['valid_from'])<day(r['valid_to']):return {'valid':False,'code':'REFERENCE_EXPIRED','path':path}
         child=r;current=r['parent']
@@ -35,3 +37,34 @@ def descendants(start,certs):
         for key,value in certs.items():
             if value['parent']==node and key not in reached:reached.add(key);todo.append(key)
     return sorted(reached)
+def weighted_consensus(items, en_limit=Decimal('1')):
+    """Inverse-variance weighted mean with iterative En screening. Starting from
+    all labs, the single lab most inconsistent with the consensus of the others is
+    removed and the consensus recomputed, until every survivor has En <= limit
+    against its leave-one-out consensus. Returns reference, combined uncertainty,
+    per-item En scores (survivors), and the sorted set of removed certificates."""
+    pool=list(items);removed=set()
+    while True:
+        weights=[Decimal(1)/(x['u_v']**2) for x in pool]
+        total=sum(weights)
+        reference=sum(x['value_v']*w for x,w in zip(pool,weights))/total
+        combined=(Decimal(1)/total).sqrt()
+        ens=[]
+        for x in pool:
+            others=[y for y in pool if y is not x]
+            if others:
+                ow=[Decimal(1)/(y['u_v']**2) for y in others];ot=sum(ow)
+                loo=sum(y['value_v']*w for y,w in zip(others,ow))/ot
+                loo_comb=(Decimal(1)/ot).sqrt()
+                ens.append(abs(x['value_v']-loo)/(x['u_v']**2+loo_comb**2).sqrt())
+            else:
+                ens.append(Decimal('0'))
+        worst=max(range(len(pool)),key=lambda i:ens[i])
+        if len(pool)>1 and ens[worst]>en_limit:
+            removed.add(pool[worst]['cert']);pool.pop(worst);continue
+        weights=[Decimal(1)/(x['u_v']**2) for x in pool]
+        total=sum(weights)
+        reference=sum(x['value_v']*w for x,w in zip(pool,weights))/total
+        combined=(Decimal(1)/total).sqrt()
+        scored=[{**x,'en':en,'weight':w/total} for x,w,en in zip(pool,weights,ens)]
+        return reference,combined,scored,sorted(removed)

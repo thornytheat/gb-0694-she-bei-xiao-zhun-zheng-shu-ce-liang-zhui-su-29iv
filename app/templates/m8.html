@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block stage_visual %}
+<div class="ref-summary">
+{% for g in current.groups %}
+<div class="chain-node">
+  <b>{{g["标准器"]}} · {{g["结论"]}}</b>
+  <div>参考值 {{g["参考值_V"]|display}} V ± {{g["合成不确定度_V"]|display}}</div>
+  <small>采信：{{g["采信实验室"] or '—'}}（{{g["采信证书"] or '—'}}）</small>
+  <small class="sev--severe">排除：{{g["排除证书"] or '—'}}</small>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
+{% block stage_panels %}
+<section class="panel wide"><div class="panel__head"><h2>参考结论依据（各实验室裁决）</h2><span>{{current.rows|length}} 份外校证书</span></div><div class="scroll"><table><thead><tr>{% for key in current.rows[0] %}<th>{{key}}</th>{% endfor %}</tr></thead><tbody>{% for row in current.rows %}<tr class="{{'row--reject' if row['裁决']=='排除' else 'row--adopt'}}">{% for value in row.values() %}<td title="{{value}}">{{value|display}}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></section>
+<section class="panel wide"><div class="panel__head"><h2>已出测量复测范围</h2><span>{{current.retest|length}} 条需复测</span></div><div class="scroll">{% if current.retest %}<table><thead><tr>{% for key in current.retest[0] %}<th>{{key}}</th>{% endfor %}</tr></thead><tbody>{% for row in current.retest %}<tr class="row--reject">{% for value in row.values() %}<td title="{{value}}">{{value|display}}</td>{% endfor %}</tr>{% endfor %}</tbody></table>{% else %}<p class="empty">本批次没有需要复测的已出测量。</p>{% endif %}</div></section>
+{% endblock %}

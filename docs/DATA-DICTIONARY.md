@@ -2,8 +2,10 @@
 
 证书有效期与量程双约束；参考标准也须在校准时有效，证书撤销向下游传播并检测环。
 
-输入字段：cert, device, alias, parent, valid_from, valid_to, minimum, maximum, unit, revoked, measured_at, value, measure_unit, version。所有ID按字符串保留；空字符串、NULL、N/A、未知与“-”视为缺失，不能当作数值零。数值使用Decimal，输出为十进制字符串。重复业务键相同内容计重复，内容冲突隔离或按明确修订号裁决，不按文件顺序盲目覆盖。
+输入字段：cert, device, alias, parent, valid_from, valid_to, minimum, maximum, unit, revoked, measured_at, value, measure_unit, version, lab, uncertainty, lead。所有ID按字符串保留；空字符串、NULL、N/A、未知与“-”视为缺失，不能当作数值零。数值使用Decimal，输出为十进制字符串。重复业务键相同内容计重复，内容冲突隔离或按明确修订号裁决，不按文件顺序盲目覆盖。
 
 每条证据有原始行号，隔离记录有原因码及原值。时间区间使用半开边界；日期定义在各模块规则内显式声明。输入表头可调序，不得缺列或重复；中文旧编码可上传。规则版本存入运行清单，重跑使用原始文件内容摘要与规则版本共同确定幂等键。复核使用revision乐观锁，陈旧提交返回409。
 
 校准电压量程闭区间[min,max]，证书日期为半开[valid_from,valid_to)。父证书需在子证书生效日有效；撤销按追溯性撤销处理，所有下游测量拒用。同编号证书定义冲突会使其及下游失去证明力。样例是电压仪器，未处理非线性量程和不确定度传播。
+
+外校比对（M8）：lab非空的证书是外部实验室对同一标准器（canonical设备）的校准结果，uncertainty为扩展不确定度（正数），lead=yes表示主导实验室且同一标准器至多一个。资格门先剔除撤销、溯源中断、同证书旧版（superseded）与主导冲突；剩余实验室按逆方差加权求参考值，并以迭代En（|En|>1）逐轮剔除最不一致者，重算一致集。参考结论记录每份外校证书的采信/排除、En与权重；溯源链经过任一未采信外校证书的已出测量列入复测。上游证书内容变化改变文件摘要与run_id，同批数据重跑结论与复测范围保持幂等。

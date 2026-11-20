@@ -15,6 +15,7 @@
 | M5 溯源链路 | 运行溯源链路并复核证据 | `POST /api/m5`；`/work/5` | `app/modules/m5_trace/rules.py` | `tests/test_m5.py` |
 | M6 测量裁决 | 运行测量裁决并复核证据 | `POST /api/m6`；`/work/6` | `app/modules/m6_verdict/rules.py` | `tests/test_m6.py` |
 | M7 撤销复核 | 运行撤销复核并复核证据 | `POST /api/m7`；`/work/7` | `app/modules/m7_revocation/rules.py` | `tests/test_m7.py` |
+| M8 外校比对 | 运行外校比对并复核参考结论与复测范围 | `POST /api/m8`；`/work/8` | `app/modules/m8_comparison/rules.py` | `tests/test_m8.py` |
 
 ## 陷阱登记
 
@@ -28,6 +29,7 @@
 | TRAP-22 | 设备别名 | 静默覆盖或误计 | 显式裁决并保留证据 | `app/modules/m2_identity/rules.py` | `tests/test_m2.py::test_alias_order_independent` |
 | TRAP-23 | 失效日边界 | 静默覆盖或误计 | 显式裁决并保留证据 | `app/modules/m3_validity/rules.py` | `tests/test_m3.py::test_expiry_endpoint` |
 | TRAP-25 | 多证书重叠 | 静默覆盖或误计 | 显式裁决并保留证据 | `app/modules/m3_validity/rules.py` | `tests/test_m3.py::test_overlapping_certificates` |
+| TRAP-26 | 外校结果分歧 | 只信主导实验室会把系统偏差带进全部结论，简单平均又稀释不合格实验室的偏差 | 先做资格门（撤销/断链/替代/主导冲突不得参与），再以逆方差加权与迭代En筛查建立加权一致；未采信外校证书下游测量列入复测 | `app/modules/m8_comparison/rules.py`、`app/domain.py` | `tests/test_m8.py` |
 
 ## 对账规则
 
